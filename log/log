@@ -1,0 +1,2 @@
+time="2024-12-20T16:18:58+08:00" level=info client_ip=58.19.5.179 data_size=385 hostname=vm method=GET path=/api/v1/article/info/8 spend_time="28407290 ms" status_code=200 user_agent=PostmanRuntime-ApipostRuntime/1.1.0
+time="2024-12-20T16:19:08+08:00" level=info client_ip=58.19.5.179 data_size=395 hostname=vm method=POST path=/api/v1/article/add spend_time="54690341 ms" status_code=200 user_agent=PostmanRuntime-ApipostRuntime/1.1.0

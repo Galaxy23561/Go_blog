@@ -8,14 +8,11 @@ import (
 	"strconv"
 )
 
-var code int
-
-
 // AddUser 添加用户
 func AddUser(c *gin.Context) {
 	var data model.User
 	_ = c.ShouldBindJSON(&data)
-	code = model.CheckUser(data.Username)
+	code := model.CheckUser(data.Username)
 	if code == errmsg.SUCCESS {
 		model.CreateUser(&data)
 	}
@@ -30,54 +27,99 @@ func AddUser(c *gin.Context) {
 	})
 }
 
+// GetUserInfo 查询单个用户
+func GetUserInfo(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var maps = make(map[string]interface{})
+	data, code := model.GetUser(id)
+	maps["username"] = data.Username
+	maps["role"] = data.Role
+	c.JSON(
+		http.StatusOK, gin.H{
+			"status":  code,
+			"data":    maps,
+			"total":   1,
+			"message": errmsg.GetErrMsg(code),
+		},
+	)
+
+}
+
+// GetUsers 查询用户列表
+func GetUsers(c *gin.Context) {
+	pageSize, _ := strconv.Atoi(c.Query("pagesize"))
+	pageNum, _ := strconv.Atoi(c.Query("pagenum"))
+	username := c.Query("username")
+
+	switch {
+	case pageSize >= 100:
+		pageSize = 100
+	case pageSize <= 0:
+		pageSize = 10
+	}
+
+	if pageNum == 0 {
+		pageNum = 1
+	}
+
+	data, total := model.GetUsers(username, pageSize, pageNum)
+
+	code := errmsg.SUCCESS
+	c.JSON(
+		http.StatusOK, gin.H{
+			"status":  code,
+			"data":    data,
+			"total":   total,
+			"message": errmsg.GetErrMsg(code),
+		},
+	)
+}
+
 // EditUser 编辑用户
 func EditUser(c *gin.Context) {
 	var data model.User
-	id,_ := strconv.Atoi(c.Param("id"))
-	c.ShouldBindJSON(&data)
-	code = model.CheckUser(data.Username)
+	id, _ := strconv.Atoi(c.Param("id"))
+	_ = c.ShouldBindJSON(&data)
+
+	code := model.CheckUpUser(id, data.Username)
 	if code == errmsg.SUCCESS {
 		model.EditUser(id, &data)
 	}
-	if code == errmsg.ERROR_USERNAME_USED {
-		c.Abort()
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"status":  code,
-		"message": errmsg.GetErrMsg(code),
-	})
+
+	c.JSON(
+		http.StatusOK, gin.H{
+			"status":  code,
+			"message": errmsg.GetErrMsg(code),
+		},
+	)
+}
+
+// ChangeUserPassword 修改密码
+func ChangeUserPassword(c *gin.Context) {
+	var data model.User
+	id, _ := strconv.Atoi(c.Param("id"))
+	_ = c.ShouldBindJSON(&data)
+
+	code := model.ChangePassword(id, &data)
+
+	c.JSON(
+		http.StatusOK, gin.H{
+			"status":  code,
+			"message": errmsg.GetErrMsg(code),
+		},
+	)
 }
 
 // DeleteUser 删除用户
 func DeleteUser(c *gin.Context) {
-	id,_ := strconv.Atoi(c.Param("id"))
-	code = model.DeleteUser(id)
+	id, _ := strconv.Atoi(c.Param("id"))
 
-	c.JSON(http.StatusOK, gin.H{
-		"status":  code,
-		"message": errmsg.GetErrMsg(code),
-	})
-}
+	code := model.DeleteUser(id)
 
-// GetSingleUser 查询单个用户
-
-
-// GetUserList 获取用户列表
-func GetUserList(c *gin.Context) {
-	pageSize,_ := strconv.Atoi(c.Query("pageSize"))
-	pageNum,_ := strconv.Atoi(c.Query("pageNum"))
-
-	if pageSize == 0 {
-		pageSize = -1
-	}
-	if pageNum == 0 {
-		pageNum = 1
-	}
-	data := model.GetUsers(pageSize,pageNum)
-	code = errmsg.SUCCESS
-	c.JSON(http.StatusOK, gin.H{
-		"status":  code,
-		"data":    data,
-		"message": errmsg.GetErrMsg(code),
-	})
+	c.JSON(
+		http.StatusOK, gin.H{
+			"status":  code,
+			"message": errmsg.GetErrMsg(code),
+		},
+	)
 }

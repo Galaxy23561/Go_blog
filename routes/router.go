@@ -2,44 +2,69 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"Go_blog/middleware"
 	"Go_blog/utils"
 	v1 "Go_blog/api/v1"
 )
+
+
 
 func InitRouter() {
 	gin.SetMode(utils.AppMode)
 	r := gin.Default()
 
-	routerV1 := r.Group("api/v1")
+	r.Use(middleware.Logger())
+	r.Use(gin.Recovery())
+	/*
+		后台管理路由接口
+	*/
+	auth := r.Group("api/v1")
+	auth.Use(middleware.JwtToken())
 	{
-		/*
-		router.GET("hello",func (c *gin.Context){
-			c.JSON(200,gin.H{
-				"msg":"ok",
-			})
-		})
-		*/
 		// 用户模块的路由接口
-		routerV1.POST("user/add", v1.AddUser)
-		routerV1.GET("users", v1.GetUserList)
-		routerV1.PUT("user/:id", v1.EditUser)
-		routerV1.DELETE("user/:id", v1.DeleteUser)
-
-
+		auth.GET("admin/users", v1.GetUsers)
+		auth.PUT("user/:id", v1.EditUser)
+		auth.DELETE("user/:id", v1.DeleteUser)
+		//修改密码
+		auth.PUT("admin/changepw/:id", v1.ChangeUserPassword)
 		// 分类模块的路由接口
-		routerV1.POST("category/add",v1.AddCategory)
-		routerV1.GET("categories",v1.GetCategoryList)
-		routerV1.PUT("category/:id",v1.EditCategory)
-		routerV1.DELETE("category/:id",v1.DeleteCategory)
+		auth.GET("admin/category", v1.GetCate)
+		auth.POST("category/add", v1.AddCategory)
+		auth.PUT("category/:id", v1.EditCate)
+		auth.DELETE("category/:id", v1.DeleteCate)
 		// 文章模块的路由接口
-		routerV1.POST("article/add",v1.AddArticle)
-		routerV1.GET("articles",v1.GetArticleList)
-		routerV1.GET("article/info/:id",v1.GetSingleArticle)
-		routerV1.GET("category/articles/:id",v1.GetCateArticle)
-		routerV1.PUT("article/:id",v1.EditArticle)
-		routerV1.DELETE("article/:id",v1.DeleteArticle)
-		// 上传文件
+		auth.GET("admin/article/info/:id", v1.GetArtInfo)
+		auth.GET("admin/article", v1.GetArt)
+		auth.POST("article/add", v1.AddArticle)
+		auth.PUT("article/:id", v1.EditArt)
+		auth.DELETE("article/:id", v1.DeleteArt)
 	}
-	r.Run(utils.HttpPort)
-	//r.Run("0.0.0.0:3000")
+
+	/*
+		前端展示页面接口
+	*/
+	router := r.Group("api/v1")
+	{
+		// 用户信息模块
+		router.POST("user/add", v1.AddUser)
+		router.GET("user/:id", v1.GetUserInfo)
+		router.GET("users", v1.GetUsers)
+
+		// 文章分类信息模块
+		router.GET("category", v1.GetCate)
+		router.GET("category/:id", v1.GetCateInfo)
+
+		// 文章模块
+		router.GET("article", v1.GetArt)
+		router.GET("article/list/:id", v1.GetCateArt)
+		router.GET("article/info/:id", v1.GetArtInfo)
+
+		// 登录控制模块
+		router.POST("login", v1.Login)
+		router.POST("loginfront", v1.LoginFront)
+
+	}
+
+	_ = r.Run(utils.HttpPort)
+
 }
