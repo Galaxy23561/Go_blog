@@ -4,17 +4,41 @@ import (
 	"github.com/gin-gonic/gin"
 	"Go_blog/middleware"
 	"Go_blog/utils"
-	v1 "Go_blog/api/v1"
+	"Go_blog/api/v1"
+	"github.com/gin-contrib/multitemplate"
 )
 
+func createMyRender() multitemplate.Renderer {
+	p := multitemplate.NewRenderer()
+	p.AddFromFiles("admin", "web/admin/dist/index.html")
+	p.AddFromFiles("front", "web/front/dist/index.html")
+	return p
+}
 
 
 func InitRouter() {
 	gin.SetMode(utils.AppMode)
-	r := gin.Default()
+	r := gin.New()
+	r.SetTrustedProxies(nil)
+
+	r.HTMLRender = createMyRender()
 
 	r.Use(middleware.Logger())
 	r.Use(gin.Recovery())
+	r.Use(middleware.Cors())
+
+	r.Static("/static", "./web/front/dist/static")
+	r.Static("/admin", "./web/admin/dist")
+	r.StaticFile("/favicon.ico", "./web/front/dist/favicon.ico")
+
+	r.GET("/", func(c *gin.Context) {
+		c.HTML(200, "front", nil)
+	})
+
+	r.GET("/admin", func(c *gin.Context) {
+		c.HTML(200, "admin", nil)
+	})
+
 	/*
 		后台管理路由接口
 	*/
